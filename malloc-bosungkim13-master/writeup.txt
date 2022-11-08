@@ -1,0 +1,71 @@
+COMP 321 Project 5: Malloc
+<Bo Sung Kim bk39, Renzo Espinoza rme5.>
+
+---(Do not write lines of text that exceed the width of this line.)------------
+
+DESIGN DESCRIPTION
+
+Global definitions and macros:
+We implemented a segregated free list for our memory allocator. Hence, we had
+a global variable of pointer type that was the head of the list of lists which
+was our segregated free lists. We did not add any macros as we determined that
+the macros provided was sufficient.
+
+Linked list Helper Functions:
+We initialized the linked list by have our free list pointer point to an array
+of the head nodes which were pointers cast to a node struct. The heads of each
+explicit list was a "dummy" node with next and prev pointing to itself upon 
+initialization. We decided to have the "dummy" head node of each explicit list
+point to itself in order to elimate the need to deal with edge cases. 
+In addition, we also created helper functions, insertBlock() and deleteBlock()
+to insert and remove free blocks into/from an explicit free list. Finally, we 
+implemented the helper function, find_explicit(), which determines the 
+appropriate free list to use.
+
+mm_init(), mm_malloc(), and mm_free():
+In init, we initialize our segmented free list and the root nodes of each 
+individual
+explicit list. No other changes were made to mm_malloc() and nn_free(); 
+however, we modified some of the helper functions in order accomodate for 
+the segregated free list implementation.
+
+mm_realloc():
+Before we even started coding, we ran gprof and found that realloc was the 
+function that needed the most optimization. One of the optimizations we made was 
+to only try to allocate or copy memory when the new size is smaller than the 
+original size of the block. In this case, we merely return the original pointer. 
+This ensures that we do not have to perform memory allocation or copying
+, which are expensive operations, unless we need to increase the size. Another 
+optimization that we made was to not immediately call mm_malloc() once we found 
+that we need more space for the new allocation. Rather, we had two options. If 
+the next contiguous block in the heap was free and is the appropriate size for 
+our realloc(), we combine the two block and can return the old pointer. Now, if
+this was not possible, then we called mm_malloc() like it was implemented 
+originally.
+
+place(), coalesce():
+These implementations were very similar to the given implementation except 
+that there is additional instructions to insert and remove free blocks in our 
+segmented free lists.
+
+find_fit():
+Our implementation of find_fit() slightly modified the given implementation.
+Firstly, we added the correct functions and logic to traverse the appropriate
+linked list rather than going through all the blocks. Further, we implemented
+a for loop that starts at smallest the explicit free list that can contain 
+the appropriate sized free block then continues to the next explicit free list
+if an appropriate block was not found in the previous explicit list that 
+contains smaller sized blocks.
+
+TESTING STRATEGY
+
+We tested for correctness by utilizing the given trace files to test for overall
+correctness. In addition, we added checks to our checkheap() function at then end 
+of places where we are manipulating the heap while running (i.e. place() and 
+coalesce()) to ensure correctness. 
+
+In checkheap(), we added additional check to the provided implementation. More 
+specifically, we check prologue and epilogue headers, check that there are 
+no overlapping block, check that no contiguous blocks were in the heap as this
+means we did not properly coalesce, and checked that every block in the free list 
+was valid and properly aligned.
